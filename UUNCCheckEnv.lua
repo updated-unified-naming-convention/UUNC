@@ -55,7 +55,7 @@ end
 
 print("\n")
 
-print("UNC Environment Check")
+print("UUNC Environment Check")
 print("✅ - Pass, ⛔ - Fail, ⏺️ - No test, ⚠️ - Missing aliases\n")
 
 task.defer(function()
@@ -66,7 +66,7 @@ task.defer(function()
 
 	print("\n")
 
-	print("UNC Summary")
+	print("UUNC Summary")
 	print("✅ Tested with a " .. rate .. "% success rate (" .. outOf .. ")")
 	print("⛔ " .. fails .. " tests failed")
 	print("⚠️ " .. undefined .. " globals are missing aliases")
@@ -162,6 +162,8 @@ end)
 
 test("getcallingscript", {})
 
+--[[
+⚠️⚠️ DEPRECATED ⚠️⚠️
 test("getscriptclosure", {"getscriptfunction"}, function()
 	local module = game:GetService("CoreGui").RobloxGui.Modules.Common.Constants
 	local constants = getrenv().require(module)
@@ -169,6 +171,8 @@ test("getscriptclosure", {"getscriptfunction"}, function()
 	assert(constants ~= generated, "Generated module should not match the original")
 	assert(shallowEqual(constants, generated), "Generated constant table should be shallow equal to the original")
 end)
+⚠️⚠️ DEPRECATED ⚠️⚠️
+]]
 
 test("hookfunction", {"replaceclosure"}, function()
 	local function test()
@@ -181,6 +185,8 @@ test("hookfunction", {"replaceclosure"}, function()
 	assert(ref() == true, "Original function should return true")
 	assert(test ~= ref, "Original function should not be same as the reference")
 end)
+
+test("gethookcache", {})
 
 test("iscclosure", {}, function()
 	assert(iscclosure(print) == true, "Function 'print' should be a C closure")
@@ -205,6 +211,7 @@ test("loadstring", {}, function()
 	local func = loadstring(bytecode)
 	assert(type(func) ~= "function", "Luau bytecode should not be loadable!")
 	assert(assert(loadstring("return ... + 1"))(1) == 2, "Failed to do simple math")
+	assert(assert(loadstring("return ... + 7"))(1) == 8, "Failed to do simple math") -- More checks
 	assert(type(select(2, loadstring("f"))) == "string", "Loadstring did not return anything for a compiler error")
 end)
 
@@ -323,30 +330,34 @@ test("debug.getinfo", {}, function()
 end)
 
 test("debug.getproto", {}, function()
+        local testnumber = math.random(1, 9999999999) -- I hate you proto fakers so the challenge to spoof is impossible
 	local function test()
 		local function proto()
-			return true
+			return testnumber
 		end
 	end
 	local proto = debug.getproto(test, 1, true)[1]
 	local realproto = debug.getproto(test, 1)
 	assert(proto, "Failed to get the inner function")
-	assert(proto() == true, "The inner function did not return anything")
+	assert(proto() == testnumber, "The inner function did not return anything")
 	if not realproto() then
 		return "Proto return values are disabled on this executor"
 	end
 end)
 
 test("debug.getprotos", {}, function()
+	local testnumber = math.random(1, 9999999999) -- I hate you proto fakers 2nd
+	local testnumber2 = math.random(1, 9999999999) -- And another
+	local testnumber3 = math.random(1, 9999999999) -- And one more
 	local function test()
 		local function _1()
-			return true
+			return testnumber
 		end
 		local function _2()
-			return true
+			return testnumber2
 		end
 		local function _3()
-			return true
+			return testnumber3
 		end
 	end
 	for i in ipairs(debug.getprotos(test)) do
@@ -744,6 +755,7 @@ end)
 
 test("getrenv", {}, function()
 	assert(_G ~= getrenv()._G, "The variable _G in the executor is identical to _G in the game")
+	assert((getgenv and getgenv().shared or shared) ~= getrenv().shared, "The variable shared in the executor is identical to shared in the game")
 end)
 
 test("getrunningscripts", {}, function()
